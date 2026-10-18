@@ -108,6 +108,8 @@ function createReact() {
     Component,
     createElement: (type, props, ...children) => ({ type, props, children }),
     useSyncExternalStore: (subscribe, getSnapshot) => getSnapshot(),
+    useState: (initial) => [typeof initial === 'function' ? initial() : initial, () => {}],
+    useEffect: () => {},
     useCallback: (fn) => fn,
   }
 }
@@ -401,26 +403,36 @@ async function main() {
     'entries=' + JSON.stringify(state.entries))
   check('stale replay did not grow the stack', state.entries.length < staleCount)
 
-  // --- titlebar pill on global panels ------------------------------------
+  // --- one unified caption position --------------------------------------
+  const headerSeat = world.seats.find((seat) => seat.options.name === 'conversation.header.leading')
   const overlaySeat = world.seats.find((seat) => seat.options.name === 'shell.overlay')
   check('titlebar seat registered in the overlay',
     overlaySeat !== undefined && overlaySeat.options.id === 'history-nav.titlebar')
+  check('header seat still registered', headerSeat !== undefined)
+  const captionPill = overlaySeat === undefined ? null : renderElement(overlaySeat.Component({}))
+  check('caption pill renders on the conversation page too',
+    captionPill !== null && captionPill.props !== undefined
+    && String(captionPill.props.className).includes('dsh-hnav--titlebar'),
+    'tree=' + JSON.stringify(captionPill))
+  const captionButtons = captionPill === null ? [] : [].concat(...(captionPill.children || []))
+  check('caption pill carries two buttons', captionButtons.length === 2)
+  check('conversation header keeps no duplicate on Windows',
+    headerSeat === undefined || renderElement(headerSeat.Component({})) === null)
+  world.document.documentElement.attributes.delete('data-windows-titlebar')
+  check('caption pill hidden without the Windows caption',
+    overlaySeat === undefined || renderElement(overlaySeat.Component({})) === null)
+  const inline = headerSeat === undefined ? null : renderElement(headerSeat.Component({}))
+  check('inline header seat appears without the Windows caption',
+    inline !== null && inline.props !== undefined && String(inline.props.className).includes('dsh-hnav'))
+  world.document.documentElement.attributes.add('data-windows-titlebar')
   world.layout.selectPanel('plugins')
   await tick()
-  const titlebar = overlaySeat === undefined ? null : renderElement(overlaySeat.Component({}))
-  check('titlebar pill renders on a global panel',
-    titlebar !== null && titlebar.props !== undefined && String(titlebar.props.className).includes('dsh-hnav--titlebar'),
-    'tree=' + JSON.stringify(titlebar))
-  const titlebarButtons = titlebar === null ? [] : [].concat(...(titlebar.children || []))
-  check('titlebar pill carries two buttons', titlebarButtons.length === 2)
-  world.document.documentElement.attributes.delete('data-windows-titlebar')
-  check('titlebar pill hidden outside desktop chrome',
-    overlaySeat === undefined || renderElement(overlaySeat.Component({})) === null)
-  world.document.documentElement.attributes.add('data-windows-titlebar')
+  const panelPill = overlaySeat === undefined ? null : renderElement(overlaySeat.Component({}))
+  check('the same caption pill renders on a global panel',
+    panelPill !== null && panelPill.props !== undefined
+    && String(panelPill.props.className).includes('dsh-hnav--titlebar'))
   world.layout.selectPanel(null)
   await tick()
-  check('titlebar pill hidden on the conversation page',
-    overlaySeat === undefined || renderElement(overlaySeat.Component({})) === null)
 
   // --- cleanup ------------------------------------------------------------
   world.dispose()
