@@ -2,6 +2,12 @@
 
 给 DSH Web GUI 加**浏览器式「后退 / 前进 / 刷新」**：在会话（Session）和全局面板（插件页等 `main` 面板）之间按访问顺序回退、前进，并可强制刷新当前页面的渲染。纯客户端插件，不修改 `app.asar`。
 
+## 语言 / Localization
+
+- 插件卡片与组合包行的**显示名、描述**来自 `locale/zh.json` / `locale/en.json` 的 `meta`，跟随 DSH 全局界面语言切换：中文显示「页面历史导航」，英文显示 “History navigation”。
+- 界面内的按钮 Tooltip、快捷键标签、刷新确认框同样通过客户端 `ctx.locale` 的中英词典（`historyNav` 命名空间）跟随全局设置，不写死文案。
+- 技术标识 `dsh-client-ui-history-nav` 是 npm/加载器用的包名，按规范保持 kebab-case 英文，不随语言变化。
+
 ## 功能
 
 - **三个按钮（后退 / 前进 / 刷新）**：26px 紧凑尺寸，Windows 桌面统一放在窗口顶栏左上角、Desktop 菜单栏（Application / Edit）右侧的固定胶囊里，会话页与插件页等全局面板页位置完全一致；其他环境（纯 Web / macOS / Linux）回退到会话标题左侧的 `conversation.header.leading`。无历史时后退/前进置灰，刷新始终可用。
@@ -44,7 +50,23 @@
    ```
 
 3. 把 `dsh-client-ui-history-nav` 加入 desktop profile 的 `dsh.profile.bundles`，或打开客户端 侧边栏 → **插件** → 添加插件 → 填 `F:\plugins-for-dsh\dsh-client-ui-history-nav` → 安装 → **立即启用**。
-4. 重启客户端（浏览器端插件在启动时挂载）：Windows 顶栏左上角（Desktop 菜单栏右侧）出现「‹ › ⟳」三个按钮，会话页与插件页等所有页面位置一致。
+4. 重启客户端（浏览器端插件在启动时挂载）：插件页里的卡片显示「页面历史导航 / History navigation」（随全局语言），Windows 顶栏左上角（Desktop 菜单栏右侧）出现「‹ › ⟳」三个按钮，会话页与插件页等所有页面位置一致。
+
+## 发布规范自查
+
+| 要求 | 状态 |
+|---|---|
+| 目录名 == `package.json.name`，kebab-case、`dsh-` 前缀、无 scope | ✅ `dsh-client-ui-history-nav` |
+| 源码位于 `F:\plugins-for-dsh`，未写入 `F:\DSH-Official` | ✅ |
+| `dsh.bundle.patch` 指向真实存在的补丁文件 | ✅ `./cordis.patch.yml` |
+| 补丁顶层为数组、插入行 id 唯一且 kebab-case、`name` 可解析 | ✅ 1 行 |
+| `lib/index.js` 零 `@deepseek-ai/*` import，`node --check` 通过 | ✅ |
+| `package.json` 合法，`exports` 覆盖 client / patch / package.json / locale | ✅ |
+| 图标存在且 ≤ 256 KiB（SVG） | ✅ `icon.svg` |
+| `locale/*.json` 提供中英双语 `meta.title` / `meta.description` | ✅ |
+| README 含安装、启用、卸载、验证范围；LICENSE 为 MIT | ✅ |
+| `check-bundle.mjs` 无 problem | ✅ problem=0 / warning=0 |
+| 每轮改动提交 git 并生成快照 | ✅ |
 
 ## 卸载
 
@@ -52,7 +74,7 @@
 
 ## 已验证 / 未验证
 
-- 已验证（本机，2026-10-18/19，客户端 `0.2.1-rc.2` 契约核对 + 离线 mock 运行）：清单/补丁通过 `check-bundle.mjs`；`lib/client.js` 无 import、`node --check` 通过；mock 客户端上下文中会话切换、面板切换、去重、回退/前进、持久化恢复、失效条目丢弃、顶栏胶囊在会话页与面板页同位置显示、非桌面环境回退到标题座位、刷新写入面板记录并在重载后恢复面板、选中会话 running 时刷新先确认均按预期工作（49 项断言）。
+- 已验证（本机，2026-10-18/19，客户端 `0.2.1-rc.2` 契约核对 + 离线 mock 运行）：清单/补丁/locale/图标通过 `check-bundle.mjs`；`lib/client.js` 无 import、`node --check` 通过；`locale/zh.json` 与 `locale/en.json` 均可解析；mock 客户端上下文中会话切换、面板切换、去重、回退/前进、持久化恢复、失效条目丢弃、顶栏胶囊在会话页与面板页同位置显示、非桌面环境回退到标题座位、刷新写入面板记录并在重载后恢复面板、选中会话 running 时刷新先确认均按预期工作（49 项断言）。
 - 未验证（需要真实 GUI 挂载后确认）：胶囊与真实菜单栏/窗口按钮的像素级间距；侧栏展开/收起时胶囊的跟随；刷新后约 0.35–1.55 秒的面板恢复时序在真实启动速度下的表现；running 检测在真实 `api-session/status` 推送下的时机；确认框的视觉与焦点表现；桌面快捷键桥接（Alt+←/→）与输入法/终端的共存；macOS/Web 的座位表现；旧版本客户端（无 `uiWorkspace.selection` 时退化为 `sessions.list` 读取）。
 
 ## 设计约定

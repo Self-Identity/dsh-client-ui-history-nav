@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "History navigation",
+    "description": "Browser-style Back / Forward / Refresh controls in the window title bar, shared by sessions and plugin panels. Refreshing warns first when the selected session is still responding."
+  }
+}
