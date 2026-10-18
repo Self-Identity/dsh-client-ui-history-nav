@@ -1,0 +1,10 @@
+# Rows this bundle contributes to the profile composition.
+#
+# The Host half (lib/index.js) does nothing. The row exists because the client
+# module graph attaches the browser half (lib/client.js, declared under
+# package.json `dsh.client`) to it: switching the bundle off therefore removes
+# both the header buttons and the shortcut commands.
+- insert:
+    - id: client-ui-history-nav
+      name: dsh-client-ui-history-nav
+      config: {}

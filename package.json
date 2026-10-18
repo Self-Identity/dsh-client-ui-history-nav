@@ -1,0 +1,44 @@
+{
+  "name": "dsh-client-ui-history-nav",
+  "version": "1.0.0",
+  "description": "Browser-style back/forward page navigation for the DSH Web client: Alt+\u2190 / Alt+\u2192 and two header buttons across Sessions and global panels, persisted in localStorage. \u7ed9 DSH \u5ba2\u6237\u7aef\u52a0\u6d4f\u89c8\u5668\u5f0f\u9875\u9762\u8fd4\u56de\uff0f\u524d\u8fdb\u3002",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "icon": "./icon.svg",
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "tools",
+    "cordis.patch.yml",
+    "icon.svg",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node tools/smoke.mjs"
+  },
+  "dsh": {
+    "manifestVersion": 1,
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation",
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-ui-workspace",
+        "@deepseek-ai/dsh-client-shortcuts"
+      ]
+    }
+  }
+}
