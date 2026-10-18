@@ -96,7 +96,7 @@ function createSnapshotStore(storage, initial, options) {
   }
 }
 
-/** Minimal React; the buttons are registered but this test never renders them. */
+/** Minimal React; the titlebar test below renders one seat through {@link renderElement}. */
 function createReact() {
   class Component {
     constructor(props) {
@@ -115,7 +115,15 @@ function createReact() {
 /** Load the bundle into a fresh vm context and return its registered factory. */
 function loadBundle(storage, react, storeKit) {
   let registration
+  const documentElement = {
+    attributes: new Set(['data-windows-titlebar']),
+    dataset: {},
+    hasAttribute(name) {
+      return this.attributes.has(name)
+    },
+  }
   const document = {
+    documentElement,
     querySelector: () => null,
     createElement: () => ({ dataset: {}, textContent: '', parentNode: null }),
     head: { appendChild: () => {} },
@@ -152,7 +160,7 @@ function loadBundle(storage, react, storeKit) {
     if (request === '@deepseek-ai/dsh-client-store') return storeKit
     throw new Error('unexpected require: ' + request)
   })
-  return { registration, module }
+  return { registration, module, document }
 }
 
 /** Build one fake client context sharing a storage, plus its disposal list. */
@@ -237,6 +245,7 @@ function createContext(storage) {
   boot.module.apply(ctx)
   return {
     module: boot.module,
+    document: boot.document,
     selection,
     panelInfo,
     layout,
@@ -254,6 +263,34 @@ function createContext(storage) {
       }
     },
   }
+}
+
+/**
+ * Render enough of one element tree for a structural assertion: function
+ * components run, class components render once, host elements come back as-is.
+ * Hooks are stubbed to their snapshots; effects and children are not mounted.
+ */
+function renderElement(element) {
+  let current = element
+  for (let depth = 0; depth < 40; depth += 1) {
+    if (current === null || current === undefined) return null
+    if (typeof current !== 'object') return current
+    const type = current.type
+    if (typeof type === 'function') {
+      const props = Object.assign({}, current.props === null || current.props === undefined ? {} : current.props)
+      if (Array.isArray(current.children) && current.children.length > 0) {
+        props.children = current.children.length === 1 ? current.children[0] : current.children
+      }
+      if (type.prototype !== undefined && type.prototype !== null && typeof type.prototype.render === 'function') {
+        current = new type(props).render()
+      } else {
+        current = type(props)
+      }
+      continue
+    }
+    return current
+  }
+  return current
 }
 
 async function main() {
@@ -363,6 +400,27 @@ async function main() {
   check('unreachable forward target dropped', !state.entries.some((entry) => entry.panelId === 'gone'),
     'entries=' + JSON.stringify(state.entries))
   check('stale replay did not grow the stack', state.entries.length < staleCount)
+
+  // --- titlebar pill on global panels ------------------------------------
+  const overlaySeat = world.seats.find((seat) => seat.options.name === 'shell.overlay')
+  check('titlebar seat registered in the overlay',
+    overlaySeat !== undefined && overlaySeat.options.id === 'history-nav.titlebar')
+  world.layout.selectPanel('plugins')
+  await tick()
+  const titlebar = overlaySeat === undefined ? null : renderElement(overlaySeat.Component({}))
+  check('titlebar pill renders on a global panel',
+    titlebar !== null && titlebar.props !== undefined && String(titlebar.props.className).includes('dsh-hnav--titlebar'),
+    'tree=' + JSON.stringify(titlebar))
+  const titlebarButtons = titlebar === null ? [] : [].concat(...(titlebar.children || []))
+  check('titlebar pill carries two buttons', titlebarButtons.length === 2)
+  world.document.documentElement.attributes.delete('data-windows-titlebar')
+  check('titlebar pill hidden outside desktop chrome',
+    overlaySeat === undefined || renderElement(overlaySeat.Component({})) === null)
+  world.document.documentElement.attributes.add('data-windows-titlebar')
+  world.layout.selectPanel(null)
+  await tick()
+  check('titlebar pill hidden on the conversation page',
+    overlaySeat === undefined || renderElement(overlaySeat.Component({})) === null)
 
   // --- cleanup ------------------------------------------------------------
   world.dispose()

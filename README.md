@@ -4,7 +4,7 @@
 
 ## 功能
 
-- **两个按钮**：注册在 `conversation.header.leading`（会话标题左侧的常驻导航座位），无历史时置灰。
+- **两个按钮**：会话页在会话标题左侧（`conversation.header.leading`）；全局面板页在窗口顶栏右侧（`shell.overlay` 的固定小胶囊，位于 Windows 最小化/最大化/关闭按钮左侧），无历史时置灰。
 - **快捷键**（可在 设置 → 快捷键 里改）：
   - Windows / Linux 桌面：`Alt+←` 后退，`Alt+→` 前进
   - macOS 桌面：`⌘[` 后退，`⌘]` 前进
@@ -18,8 +18,13 @@
 会记录：
 
 - 侧栏里切换会话（`uiWorkspace.selection` 变化）；
-- 打开/关闭全局面板，例如 **插件页**、其他插件注册的 `main` 面板（`layout.panelInfo.activePanelId` 变化）；
+- 打开/关闭全局面板，例如 **插件页**、**具体插件页**、其他插件注册的 `main` 面板（`layout.panelInfo.activePanelId` 变化）；
 - 从面板回到会话（`activePanelId = null`）。
+
+按钮出现的位置：
+
+- 会话页：标题左侧；
+- 面板页：窗口顶栏右侧的胶囊（Windows/macOS 桌面）。Web 与 Linux 桌面没有自定义顶栏，面板页只保留快捷键。
 
 不会单独记录：
 
@@ -36,7 +41,7 @@
    ```
 
 3. 把 `dsh-client-ui-history-nav` 加入 desktop profile 的 `dsh.profile.bundles`，或打开客户端 侧边栏 → **插件** → 添加插件 → 填 `F:\plugins-for-dsh\dsh-client-ui-history-nav` → 安装 → **立即启用**。
-4. 重启客户端（浏览器端插件在启动时挂载），会话标题左侧出现「‹ ›」两个按钮。
+4. 重启客户端（浏览器端插件在启动时挂载）：会话标题左侧、以及插件等全局面板页的顶栏右侧，出现「‹ ›」两个按钮。
 
 ## 卸载
 
@@ -44,11 +49,11 @@
 
 ## 已验证 / 未验证
 
-- 已验证（本机，2026-10-18，客户端 `0.2.1-rc.2` 契约核对 + 离线 mock 运行）：清单/补丁通过 `check-bundle.mjs`；`lib/client.js` 无 import、`node --check` 通过；mock 客户端上下文中会话切换、面板切换、去重、回退/前进、持久化恢复、失效条目丢弃均按预期工作。
-- 未验证（需要真实 GUI 挂载后确认）：按钮在真实会话头部的视觉间距；桌面快捷键桥接（Alt+←/→）与输入法/终端的共存；旧版本客户端（无 `uiWorkspace.selection` 时退化为 `sessions.list` 读取）。
+- 已验证（本机，2026-10-18/19，客户端 `0.2.1-rc.2` 契约核对 + 离线 mock 运行）：清单/补丁通过 `check-bundle.mjs`；`lib/client.js` 无 import、`node --check` 通过；mock 客户端上下文中会话切换、面板切换、去重、回退/前进、持久化恢复、失效条目丢弃、面板页顶栏胶囊的显示条件均按预期工作（39 项断言）。
+- 未验证（需要真实 GUI 挂载后确认）：顶栏胶囊在真实窗口里的视觉位置与 138px 原生按钮预留；按钮在真实会话头部的视觉间距；桌面快捷键桥接（Alt+←/→）与输入法/终端的共存；macOS 顶栏位置；旧版本客户端（无 `uiWorkspace.selection` 时退化为 `sessions.list` 读取）。
 
 ## 设计约定
 
 - 只通过 `ctx` 取能力，零 `@deepseek-ai/*` import；React 与 `@deepseek-ai/dsh-client-store` 来自浏览器模块表。
-- 客户端半区只注册一个 `conversation.header.leading` 座位与两条 shortcut 命令，不写 `document.body`，不替换应用根节点。
+- 客户端半区只注册两个座位（`conversation.header.leading` 与 `shell.overlay` 里的 `history-nav.titlebar`）与两条 shortcut 命令，不写 `document.body`，不替换应用根节点。
 - 所有订阅、样式节点与快捷键都挂在 `ctx.effect` 上，插件卸载即释放。
