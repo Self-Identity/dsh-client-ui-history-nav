@@ -110,6 +110,7 @@ function createReact() {
     useSyncExternalStore: (subscribe, getSnapshot) => getSnapshot(),
     useState: (initial) => [typeof initial === 'function' ? initial() : initial, () => {}],
     useEffect: () => {},
+    useRef: (initial) => ({ current: initial }),
     useCallback: (fn) => fn,
   }
 }
@@ -261,6 +262,7 @@ function createContext(storage) {
     module: boot.module,
     document: boot.document,
     stats: boot.stats,
+    sessionList,
     selection,
     panelInfo,
     layout,
@@ -427,7 +429,7 @@ async function main() {
     captionPill !== null && captionPill.props !== undefined
     && String(captionPill.props.className).includes('dsh-hnav--titlebar'),
     'tree=' + JSON.stringify(captionPill))
-  const captionButtons = captionPill === null ? [] : [].concat(...(captionPill.children || []))
+  const captionButtons = captionPill === null ? [] : [].concat(...(captionPill.children || [])).filter((child) => child !== null)
   check('caption pill carries back/forward/refresh', captionButtons.length === 3)
   check('conversation header keeps no duplicate on Windows',
     headerSeat === undefined || renderElement(headerSeat.Component({})) === null)
@@ -444,7 +446,7 @@ async function main() {
   check('the same caption pill renders on a global panel',
     panelPill !== null && panelPill.props !== undefined
     && String(panelPill.props.className).includes('dsh-hnav--titlebar'))
-  const panelButtons = panelPill === null ? [] : [].concat(...(panelPill.children || []))
+  const panelButtons = panelPill === null ? [] : [].concat(...(panelPill.children || [])).filter((child) => child !== null)
   check('panel pill carries three buttons', panelButtons.length === 3)
   if (panelButtons.length === 3) panelButtons[2].props.onClick()
   check('refresh reloads the page', world.stats.reloads === 1)
@@ -452,6 +454,14 @@ async function main() {
   eq('refresh records the current panel', refreshRecord.panelId, 'plugins')
   world.layout.selectPanel(null)
   await tick()
+
+  // A running Session must ask before reloading.
+  world.sessionList.set({ ids: ['s9'], byId: { s9: { id: 's9', running: true } } })
+  await tick()
+  const runningPill = renderElement(overlaySeat.Component({}))
+  const runningButtons = runningPill === null ? [] : [].concat(...(runningPill.children || [])).filter((child) => child !== null)
+  if (runningButtons.length >= 3) runningButtons[2].props.onClick()
+  check('running session asks before refreshing', world.stats.reloads === 1)
 
   // --- refresh restore after the reload ----------------------------------
   world.dispose()

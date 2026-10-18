@@ -5,7 +5,7 @@
 ## 功能
 
 - **三个按钮（后退 / 前进 / 刷新）**：26px 紧凑尺寸，Windows 桌面统一放在窗口顶栏左上角、Desktop 菜单栏（Application / Edit）右侧的固定胶囊里，会话页与插件页等全局面板页位置完全一致；其他环境（纯 Web / macOS / Linux）回退到会话标题左侧的 `conversation.header.leading`。无历史时后退/前进置灰，刷新始终可用。
-- **刷新**：重新加载当前页面的渲染（`location.reload()`），用于清掉卡住的界面状态。刷新前会把当前全局面板记到 `localStorage` 的一次性记录里，重载回来后自动重新打开该面板，不会把你丢回会话页；面板内部状态和滚动位置会重置，这是刷新的预期代价。若面板插件在重载后不存在，则停留在会话页。
+- **刷新**：重新加载当前页面的渲染（`location.reload()`），用于清掉卡住的界面状态。**如果当前选中的会话正在回复/执行中，会先弹确认框**（取消 / 继续刷新；Esc、点遮罩、取消按钮都能关掉），避免误刷打断正在看的流式输出。刷新前会把当前全局面板记到 `localStorage` 的一次性记录里，重载回来后自动重新打开该面板，不会把你丢回会话页；面板内部状态和滚动位置会重置，这是刷新的预期代价。若面板插件在重载后不存在，则停留在会话页。
 - **快捷键**（可在 设置 → 快捷键 里改）：
   - Windows / Linux 桌面：`Alt+←` 后退，`Alt+→` 前进
   - macOS 桌面：`⌘[` 后退，`⌘]` 前进
@@ -52,11 +52,11 @@
 
 ## 已验证 / 未验证
 
-- 已验证（本机，2026-10-18/19，客户端 `0.2.1-rc.2` 契约核对 + 离线 mock 运行）：清单/补丁通过 `check-bundle.mjs`；`lib/client.js` 无 import、`node --check` 通过；mock 客户端上下文中会话切换、面板切换、去重、回退/前进、持久化恢复、失效条目丢弃、顶栏胶囊在会话页与面板页同位置显示、非桌面环境回退到标题座位、刷新写入面板记录并在重载后恢复面板均按预期工作（48 项断言）。
-- 未验证（需要真实 GUI 挂载后确认）：胶囊与真实菜单栏/窗口按钮的像素级间距；侧栏展开/收起时胶囊的跟随；刷新后约 0.35–1.55 秒的面板恢复时序在真实启动速度下的表现；桌面快捷键桥接（Alt+←/→）与输入法/终端的共存；macOS/Web 的座位表现；旧版本客户端（无 `uiWorkspace.selection` 时退化为 `sessions.list` 读取）。
+- 已验证（本机，2026-10-18/19，客户端 `0.2.1-rc.2` 契约核对 + 离线 mock 运行）：清单/补丁通过 `check-bundle.mjs`；`lib/client.js` 无 import、`node --check` 通过；mock 客户端上下文中会话切换、面板切换、去重、回退/前进、持久化恢复、失效条目丢弃、顶栏胶囊在会话页与面板页同位置显示、非桌面环境回退到标题座位、刷新写入面板记录并在重载后恢复面板、选中会话 running 时刷新先确认均按预期工作（49 项断言）。
+- 未验证（需要真实 GUI 挂载后确认）：胶囊与真实菜单栏/窗口按钮的像素级间距；侧栏展开/收起时胶囊的跟随；刷新后约 0.35–1.55 秒的面板恢复时序在真实启动速度下的表现；running 检测在真实 `api-session/status` 推送下的时机；确认框的视觉与焦点表现；桌面快捷键桥接（Alt+←/→）与输入法/终端的共存；macOS/Web 的座位表现；旧版本客户端（无 `uiWorkspace.selection` 时退化为 `sessions.list` 读取）。
 
 ## 设计约定
 
 - 只通过 `ctx` 取能力，零 `@deepseek-ai/*` import；React 与 `@deepseek-ai/dsh-client-store` 来自浏览器模块表。
-- 客户端半区只注册两个座位（`conversation.header.leading` 与 `shell.overlay` 里的 `history-nav.titlebar`）与两条 shortcut 命令，不写 `document.body`，不替换应用根节点；刷新只调用 `location.reload()` 加一条可丢弃的一次性 `localStorage` 记录。
+- 客户端半区只注册两个座位（`conversation.header.leading` 与 `shell.overlay` 里的 `history-nav.titlebar`）与两条 shortcut 命令，不写 `document.body`，不替换应用根节点；刷新只调用 `location.reload()` 加一条可丢弃的一次性 `localStorage` 记录；running 检测只读 `sessions.list` 汇总里的 `running` 位，不订阅额外事件。
 - 所有订阅、样式节点与快捷键都挂在 `ctx.effect` 上，插件卸载即释放。
