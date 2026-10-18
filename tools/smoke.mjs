@@ -130,12 +130,24 @@ function loadBundle(storage, react, storeKit) {
     createElement: () => ({ dataset: {}, textContent: '', parentNode: null }),
     head: { appendChild: () => {} },
   }
+  const stats = { reloads: 0 }
   const window = {
     __ModuleLoader__: {
       load: (definition) => {
         registration = definition
       },
     },
+    location: {
+      reload: () => {
+        stats.reloads += 1
+      },
+    },
+    setTimeout: (callback, delay) => setTimeout(callback, delay),
+    clearTimeout: (timer) => clearTimeout(timer),
+    requestAnimationFrame: (callback) => setTimeout(callback, 0),
+    cancelAnimationFrame: (timer) => clearTimeout(timer),
+    addEventListener: () => {},
+    removeEventListener: () => {},
   }
   const context = {
     window,
@@ -162,7 +174,7 @@ function loadBundle(storage, react, storeKit) {
     if (request === '@deepseek-ai/dsh-client-store') return storeKit
     throw new Error('unexpected require: ' + request)
   })
-  return { registration, module, document }
+  return { registration, module, document, stats }
 }
 
 /** Build one fake client context sharing a storage, plus its disposal list. */
@@ -248,6 +260,7 @@ function createContext(storage) {
   return {
     module: boot.module,
     document: boot.document,
+    stats: boot.stats,
     selection,
     panelInfo,
     layout,
@@ -415,7 +428,7 @@ async function main() {
     && String(captionPill.props.className).includes('dsh-hnav--titlebar'),
     'tree=' + JSON.stringify(captionPill))
   const captionButtons = captionPill === null ? [] : [].concat(...(captionPill.children || []))
-  check('caption pill carries two buttons', captionButtons.length === 2)
+  check('caption pill carries back/forward/refresh', captionButtons.length === 3)
   check('conversation header keeps no duplicate on Windows',
     headerSeat === undefined || renderElement(headerSeat.Component({})) === null)
   world.document.documentElement.attributes.delete('data-windows-titlebar')
@@ -431,8 +444,23 @@ async function main() {
   check('the same caption pill renders on a global panel',
     panelPill !== null && panelPill.props !== undefined
     && String(panelPill.props.className).includes('dsh-hnav--titlebar'))
+  const panelButtons = panelPill === null ? [] : [].concat(...(panelPill.children || []))
+  check('panel pill carries three buttons', panelButtons.length === 3)
+  if (panelButtons.length === 3) panelButtons[2].props.onClick()
+  check('refresh reloads the page', world.stats.reloads === 1)
+  const refreshRecord = JSON.parse(storage.getItem('dsh.history-nav.refresh.v1'))
+  eq('refresh records the current panel', refreshRecord.panelId, 'plugins')
   world.layout.selectPanel(null)
   await tick()
+
+  // --- refresh restore after the reload ----------------------------------
+  world.dispose()
+  world = createContext(storage)
+  eq('fresh boot starts on the conversation', world.panelInfo.getSnapshot().activePanelId, null)
+  await new Promise((done) => setTimeout(done, 1000))
+  eq('refresh restored the panel page', world.panelInfo.getSnapshot().activePanelId, 'plugins')
+  await new Promise((done) => setTimeout(done, 1500))
+  eq('refresh record consumed', storage.getItem('dsh.history-nav.refresh.v1'), null)
 
   // --- cleanup ------------------------------------------------------------
   world.dispose()
