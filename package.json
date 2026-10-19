@@ -1,10 +1,17 @@
 {
   "name": "dsh-client-ui-history-nav",
   "version": "1.5.0",
-  "description": "Browser-style Back / Forward / Refresh controls in the DSH window title bar, shared by Sessions and plugin panels, with a confirmation before refreshing a running Session; display text follows the DSH locale (English / Chinese). \u7ed9 DSH \u5ba2\u6237\u7aef\u52a0\u6d4f\u89c8\u5668\u5f0f\u9875\u9762\u540e\u9000\u3001\u524d\u8fdb\u4e0e\u5237\u65b0\uff08\u9876\u680f\u6309\u94ae\uff0c\u4e2d\u82f1\u53cc\u8bed\u968f\u5168\u5c40\u8bbe\u7f6e\uff09\u3002",
+  "description": "Browser-style Back / Forward / Refresh controls in the DSH window title bar, shared by Sessions and plugin panels, with a confirmation before refreshing a running Session; display text follows the DSH locale (English / Chinese). 给 DSH 客户端加浏览器式页面后退、前进与刷新（顶栏按钮，中英双语随全局设置）。",
   "license": "MIT",
-  "author": "Yan-X-X",
-  "private": true,
+  "author": "Self-Identity",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Self-Identity/dsh-client-ui-history-nav.git"
+  },
+  "homepage": "https://github.com/Self-Identity/dsh-client-ui-history-nav#readme",
+  "bugs": {
+    "url": "https://github.com/Self-Identity/dsh-client-ui-history-nav/issues"
+  },
   "type": "module",
   "icon": "./icon.svg",
   "keywords": [
@@ -15,7 +22,8 @@
     "history"
   ],
   "engines": {
-    "node": ">=22.19.0"
+    "node": ">=22.19.0",
+    "dsh": ">=0.2.1-rc.2 <0.3.0"
   },
   "exports": {
     ".": "./lib/index.js",
@@ -32,6 +40,7 @@
     "cordis.patch.yml",
     "icon.svg",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "scripts": {
