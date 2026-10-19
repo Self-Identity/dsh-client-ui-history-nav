@@ -1,5 +1,8 @@
 # dsh-client-ui-history-nav
 
+[![npm](https://img.shields.io/npm/v/dsh-client-ui-history-nav.svg)](https://www.npmjs.com/package/dsh-client-ui-history-nav)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 Browser-style Back / Forward / Refresh controls in the DSH client window title bar. Sessions and plugin panels share one history stack, and a refresh asks for confirmation while a session is still running.
 
 给 DSH 客户端加浏览器式「后退 / 前进 / 刷新」：会话与插件面板共用一条历史栈；选中会话仍在回复时，刷新会先确认。
@@ -30,7 +33,7 @@ Shortcuts are rebindable in **Settings → Shortcuts**.
 ## Install
 
 1. Open the client sidebar → **Plugins** → **Add plugin**.
-2. Point it at this package: the local source directory, or the npm package name once published.
+2. Enter `dsh-client-ui-history-nav@1.5.0` (or pick the local source directory).
 3. Choose **Install**, then **Enable now**; restart the client if it says the change takes effect on the next start.
 4. The card must read **Enabled / Mounted**. The back / forward / refresh pill then appears in the title bar.
 
@@ -55,3 +58,5 @@ node tools/smoke.mjs
 ## License
 
 MIT.
+
+Not affiliated with DeepSeek. 与 DeepSeek 官方无隶属关系。
