@@ -1,53 +1,53 @@
 # dsh-client-ui-history-nav
 
+[中文](README.md) | [English](README.en.md)
+
 [![npm](https://img.shields.io/npm/v/dsh-client-ui-history-nav.svg)](https://www.npmjs.com/package/dsh-client-ui-history-nav)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Browser-style Back / Forward / Refresh controls in the DSH client window title bar. Sessions and plugin panels share one history stack, and a refresh asks for confirmation while a session is still running.
+给 DSH 客户端加浏览器式「后退 / 前进 / 刷新」按钮：会话与插件面板共用一条历史栈；选中的会话仍在回复时，刷新会先弹出确认。
 
-给 DSH 客户端加浏览器式「后退 / 前进 / 刷新」：会话与插件面板共用一条历史栈；选中会话仍在回复时，刷新会先确认。
+## 功能
 
-## Features
+- **后退 / 前进**：在会话与全局面板之间回退、前进；没有历史时按钮置灰。
+- **刷新**：重新加载当前页面的渲染，并在重载后重新打开刷新前的面板。选中的会话正在运行时先弹确认框（Esc、点遮罩或「取消」都能关掉）。面板内部状态和滚动位置会重置，这是刷新的预期代价。
+- **统一历史栈**：会话切换与面板打开/关闭按访问顺序记录，最多 60 条，存在 `localStorage` 的 `dsh.history-nav.v1`。
+- **自愈**：会话被归档、面板插件被卸载后，回放到失效条目会自动移除，不会卡住按钮。
+- **本地化**：按钮 Tooltip、快捷键标签与确认框跟随 DSH 全局语言（中文 / English）。
 
-- **Back / forward** across sessions and global panels; the buttons are disabled when there is no history.
-- **Refresh** reloads the current page rendering and reopens the panel that was open before the reload. A running session triggers a confirmation first (Esc, overlay click or Cancel dismisses it). Panel state and scroll position reset — that is the expected cost of a refresh.
-- **One shared stack**: session switches and panel open/close are recorded in visit order, up to 60 entries, persisted in `localStorage` under `dsh.history-nav.v1`.
-- **Self-healing**: entries whose session was archived or whose panel plugin is gone are dropped on replay instead of sticking the buttons.
-- **Localized**: button tooltips, shortcut labels and the confirmation dialog follow the DSH locale (Chinese / English).
+## 位置
 
-## Placement
+- **Windows 桌面**：标题栏、Application / Edit 菜单右侧；会话页与面板页位置一致。
+- **其他平台**：会话标题左侧的座位；全局面板只保留快捷键。
 
-- **Windows desktop**: caption area, right of the Application / Edit menu; the same position on session pages and panel pages.
-- **Other platforms**: the leading seat of the conversation header; global panels keep the keyboard shortcuts only.
+## 快捷键
 
-## Shortcuts
-
-| Platform | Back | Forward |
+| 平台 | 后退 | 前进 |
 |---|---|---|
 | Windows / Linux | `Alt+←` | `Alt+→` |
 | macOS | `⌘[` | `⌘]` |
-| Plain browser | `Ctrl+Alt+←` | `Ctrl+Alt+→` |
+| 纯浏览器 | `Ctrl+Alt+←` | `Ctrl+Alt+→` |
 
-Shortcuts are rebindable in **Settings → Shortcuts**.
+快捷键可在 **设置 → 快捷键** 中修改。
 
-## Install
+## 安装
 
-1. Open the client sidebar → **Plugins** → **Add plugin**.
-2. Enter `dsh-client-ui-history-nav@1.5.0` (or pick the local source directory).
-3. Choose **Install**, then **Enable now**; restart the client if it says the change takes effect on the next start.
-4. The card must read **Enabled / Mounted**. The back / forward / refresh pill then appears in the title bar.
+1. 客户端侧边栏 → **插件** → **添加插件**。
+2. 填 `dsh-client-ui-history-nav@1.5.0`（或选择本地源码目录）。
+3. **安装** → **立即启用**；若提示「改动在下次启动生效」，重启客户端。
+4. 卡片显示 **已启用 / 已挂载** 即生效；顶栏随后出现后退 / 前进 / 刷新胶囊。
 
-## Compatibility
+## 兼容性
 
-- Built against the DeepSeek Harness desktop client **0.2.1-rc.2**. It relies on the `uiWorkspace.selection` projection, `layout.panelInfo`, the shortcut registry and the conversation header seat.
-- The host half imports nothing. The browser half resolves only platform module seeds (`react`, `@deepseek-ai/dsh-client-store`).
-- Client upgrades may change these contracts. When a seat or a service method is missing the plugin stays inert instead of breaking the shell; see the console for `[dsh-client-ui-history-nav]` warnings.
+- 基于 DeepSeek Harness 桌面客户端 **0.2.1-rc.2**。依赖 `uiWorkspace.selection` 投影、`layout.panelInfo`、快捷键注册表与会话标题座位。
+- Host 半区不 import 任何包；浏览器半区只解析平台模块种子（`react`、`@deepseek-ai/dsh-client-store`）。
+- 客户端升级可能改动这些契约。座位或服务方法缺失时插件保持惰性，不会破坏外壳；控制台会有 `[dsh-client-ui-history-nav]` 警告。
 
-## Uninstall
+## 卸载
 
-Disable the bundle in **Plugins** (or remove it from the profile's `dsh.profile.bundles`) and restart. History lives only in `localStorage`; delete `dsh.history-nav.v1` to clear it.
+在 **插件** 里关闭该组合包（或从 profile 的 `dsh.profile.bundles` 移除）后重启。历史只存在 `localStorage`；删除 `dsh.history-nav.v1` 即清空。
 
-## Development
+## 开发
 
 ```powershell
 node --check lib/index.js
@@ -55,8 +55,6 @@ node --check lib/client.js
 node tools/smoke.mjs
 ```
 
-## License
+## 许可
 
-MIT.
-
-Not affiliated with DeepSeek. 与 DeepSeek 官方无隶属关系。
+MIT。与 DeepSeek 官方无隶属关系。
